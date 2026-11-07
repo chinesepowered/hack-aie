@@ -31,6 +31,7 @@ agent = Agent(
                  "(Muse Spark), segments it with SAM 3.1, grades condition (Gemini 4 Argon) and prices it from live "
                  "listings - with real-pixel evidence."),
     publish_agent_details=True,
+    avatar_url=f"{config.AVATAR_BASE}/capy_scan.png",
     handle_messages_concurrently=True,
 )
 chat = Protocol(spec=chat_protocol_spec)

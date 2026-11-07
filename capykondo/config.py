@@ -60,3 +60,7 @@ def public_url(path: str) -> str | None:
     if not path.startswith("/"):
         path = "/" + path
     return PUBLIC_BASE_URL + path
+
+# Agentverse profile avatars (resolve once the repo is public on main)
+AVATAR_BASE = os.environ.get("CAPY_AVATAR_BASE",
+                             "https://raw.githubusercontent.com/chinesepowered/hack-aie/main/web/static/img")

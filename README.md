@@ -63,6 +63,10 @@ Two agents built with **uAgents**, registered on **Agentverse**, discoverable an
 - **Monetization**: a per-sale fee through the Payment Protocol (and a monthly plan for shops/resellers) — every sale is
   an agent-to-agent transaction on Fetch's rails.
 
+**Verified end to end on ASI:One:** ASI:One's planner discovered `capy-kondo` on Agentverse from a plain request
+(*"find a marketplace agent that sells decluttered secondhand items"*), messaged it through its mailbox, received the
+SubQ-ranked listings and detail cards, and relayed a counter-offer card for the buyer to accept.
+
 Try on ASI:One: *"Any headphones under $30?"*, *"Would you take $15 for the keyboard?"*, *"I want to sell my stuff:
 <photo link>"*, *"The mug should be $5"*, *"What have you learned?"*
 

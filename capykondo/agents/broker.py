@@ -35,6 +35,7 @@ agent = Agent(
     description=("Capy Kondo: a calm capybara that turns your clutter into listings and sells it for you. "
                  "Find secondhand items with real-photo evidence, haggle, and pay inside ASI:One."),
     publish_agent_details=True,
+    avatar_url=f"{config.AVATAR_BASE}/capy_logo.png",
     handle_messages_concurrently=True,
 )
 chat = Protocol(spec=chat_protocol_spec)
