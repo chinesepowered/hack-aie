@@ -16,7 +16,7 @@ from pathlib import Path
 import meta_sam_parser as msp
 from PIL import Image
 
-from . import brain, config, llm, media, segment, store, studio
+from . import brain, config, llm, media, segment, store, studio, subq
 
 log = logging.getLogger("capy.pipeline")
 
@@ -306,7 +306,7 @@ async def track_outlines(track: segment.Track, best_frame: int, keyframes: int =
 
 # ------------------------------------------------------------------ appraisal
 
-async def appraise(item: dict, image_path: Path) -> tuple[dict, dict]:
+async def appraise(item: dict, image_path: Path, unbranded: bool = False) -> tuple[dict, dict]:
     label = (item.get("data") or {}).get("visible_label") or ""
     prompt = (
         "Identify this item for a secondhand listing. Use visible details for the best guess at brand and model "
@@ -314,7 +314,9 @@ async def appraise(item: dict, image_path: Path) -> tuple[dict, dict]:
         "USED items and the new retail price, and cite real listings in comps (real URLs only). Suggest a quick-sale "
         "price for a casual seller who wants to declutter, and a floor price (the lowest they should accept). "
         "Write a warm, honest 2-sentence description. Keep keywords short."
-        f" Item hint: {item.get('name')} ({item.get('category')})."
+        + (" The brand could NOT be verified from the photo: treat it as unbranded/generic, do not name a brand "
+           "in the title or description, and price it as a generic item." if unbranded else "")
+        + f" Item hint: {item.get('name')} ({item.get('category')})."
         + (f" The seller wrote this price label next to it: '{label}'." if label else "")
         + brain.playbook_section("pricing") + brain.playbook_section("identification")
     )
@@ -404,8 +406,63 @@ async def finish_item(scan_id: str, item_id: str, inspect_imgs: list[Path]) -> N
         data["studio"] = media_url(studio_path)
     data["white"] = media_url(white)
     fields["status"] = "listed"
+
+    # ---- SubQ Snap trust check: does the real photo back up what the models claimed?
+    auto_corrections: list[tuple[str, str]] = []
+    if ap and subq.enabled():
+        _emit(scan_id, "trust_start", item_id=item_id)
+        try:
+            listing = {**item, **fields}
+            trust = await subq.trust_check(listing, [white] + list(inspect_imgs[:1]))
+            data["trust"] = trust
+            flags = trust["flags"]
+            if "prohibited" in flags:
+                fields["status"] = "blocked"
+            elif "photo_mismatch" in flags:
+                fields["status"] = "review"
+            if "brand_unverified" in flags:
+                # the brand was a guess: list it honestly and re-price as unbranded
+                claimed_brand, claimed_title = fields.get("brand"), fields.get("title")
+                data["claimed"] = {"brand": claimed_brand, "title": claimed_title, "price": fields.get("price")}
+                fields["brand"] = "Unbranded"
+                fields["title"] = _generic_title(item, cond)
+                try:
+                    ap2, _ = await appraise({**item, "name": fields["title"]}, white, unbranded=True)
+                    label_price = _price_from_label(d.get("visible_label", ""))
+                    market = friendly_price(float(ap2.get("suggested_price") or 0))
+                    fields["price"] = label_price or market
+                    fields["floor_price"] = min(fields["price"], friendly_price(float(ap2.get("floor_price") or fields["price"] * 0.75)))
+                    fields["description"] = ap2.get("description") or fields.get("description")
+                    data.update(market_price=market, comps=[c for c in ap2.get("comps", [])
+                                                            if str(c.get("url", "")).startswith("http")][:4])
+                except Exception as e:  # noqa: BLE001
+                    log.warning("unbranded re-price failed: %s", e)
+                auto_corrections.append(("brand", "Unbranded"))
+            if "condition_disputed" in flags:
+                data["condition_note"] = (f"Inspector said {fields.get('condition')}; SubQ leans {trust['condition']} "
+                                          f"({round(100 * (trust.get('condition_confidence') or 0))}% confidence)")
+        except Exception as e:  # noqa: BLE001
+            log.warning("SubQ trust check failed: %s", e)
     updated = store.update_item(item_id, data=data, **fields)
     _emit(scan_id, "item_ready", item=updated)
+    for field, value in auto_corrections:
+        asyncio.create_task(_auto_learn(item_id, field, value))
+
+
+def _generic_title(item: dict, cond: dict | None) -> str:
+    name = (item.get("name") or item.get("sam_phrase") or "Item").strip()
+    return name[:1].upper() + name[1:]
+
+
+async def _auto_learn(item_id: str, field: str, value: str) -> None:
+    """Corrections caught by the SubQ verifier feed Capy's Brain exactly like a seller's correction would."""
+    try:
+        cid = await brain.record_correction(item_id, field, value,
+                                            note="Automatic: SubQ Snap found no visible logo for the claimed brand.",
+                                            source="subq", apply=False)
+        await brain.learn(cid)
+    except Exception as e:  # noqa: BLE001
+        log.warning("auto-learn failed: %s", e)
 
 
 # ------------------------------------------------------------------ orchestration

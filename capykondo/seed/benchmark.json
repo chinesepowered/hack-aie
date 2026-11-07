@@ -1,0 +1,191 @@
+[
+ {
+  "id": "seed_hoodie_brand",
+  "task": "identification",
+  "field": "brand",
+  "image": "img/hoodie.jpg",
+  "name": "folded hoodie",
+  "category": "clothing",
+  "expected": "Unbranded"
+ },
+ {
+  "id": "seed_hoodie_price",
+  "task": "pricing",
+  "field": "price",
+  "image": "img/hoodie.jpg",
+  "name": "folded hoodie",
+  "category": "clothing",
+  "expected": "15"
+ },
+ {
+  "id": "seed_hoodie_condition",
+  "task": "condition",
+  "field": "condition",
+  "image": "img/hoodie.jpg",
+  "name": "folded hoodie",
+  "category": "clothing",
+  "expected": "good"
+ },
+ {
+  "id": "seed_mug_brand",
+  "task": "identification",
+  "field": "brand",
+  "image": "img/mug.jpg",
+  "name": "ceramic mug",
+  "category": "Drinkware",
+  "expected": "Unbranded"
+ },
+ {
+  "id": "seed_mug_price",
+  "task": "pricing",
+  "field": "price",
+  "image": "img/mug.jpg",
+  "name": "ceramic mug",
+  "category": "Drinkware",
+  "expected": "3"
+ },
+ {
+  "id": "seed_mug_condition",
+  "task": "condition",
+  "field": "condition",
+  "image": "img/mug.jpg",
+  "name": "ceramic mug",
+  "category": "Drinkware",
+  "expected": "good"
+ },
+ {
+  "id": "seed_plush_brand",
+  "task": "identification",
+  "field": "brand",
+  "image": "img/plush.jpg",
+  "name": "capybara plush",
+  "category": "Toys > Plush & Stuffed Animals",
+  "expected": "Unbranded"
+ },
+ {
+  "id": "seed_plush_price",
+  "task": "pricing",
+  "field": "price",
+  "image": "img/plush.jpg",
+  "name": "capybara plush",
+  "category": "Toys > Plush & Stuffed Animals",
+  "expected": "5"
+ },
+ {
+  "id": "seed_plush_condition",
+  "task": "condition",
+  "field": "condition",
+  "image": "img/plush.jpg",
+  "name": "capybara plush",
+  "category": "Toys > Plush & Stuffed Animals",
+  "expected": "like new"
+ },
+ {
+  "id": "seed_stickers_brand",
+  "task": "identification",
+  "field": "brand",
+  "image": "img/stickers.jpg",
+  "name": "sticker sheet",
+  "category": "Stationery",
+  "expected": "Unbranded"
+ },
+ {
+  "id": "seed_stickers_price",
+  "task": "pricing",
+  "field": "price",
+  "image": "img/stickers.jpg",
+  "name": "sticker sheet",
+  "category": "Stationery",
+  "expected": "2"
+ },
+ {
+  "id": "seed_bottle_brand",
+  "task": "identification",
+  "field": "brand",
+  "image": "img/bottle.jpg",
+  "name": "metal water bottle",
+  "category": "drinkware",
+  "expected": "Unbranded"
+ },
+ {
+  "id": "seed_bottle_price",
+  "task": "pricing",
+  "field": "price",
+  "image": "img/bottle.jpg",
+  "name": "metal water bottle",
+  "category": "drinkware",
+  "expected": "4"
+ },
+ {
+  "id": "seed_bottle_condition",
+  "task": "condition",
+  "field": "condition",
+  "image": "img/bottle.jpg",
+  "name": "metal water bottle",
+  "category": "drinkware",
+  "expected": "fair"
+ },
+ {
+  "id": "seed_headphones_brand",
+  "task": "identification",
+  "field": "brand",
+  "image": "img/headphones.jpg",
+  "name": "over-ear headphones",
+  "category": "Headphones",
+  "expected": "Unbranded"
+ },
+ {
+  "id": "seed_headphones_price",
+  "task": "pricing",
+  "field": "price",
+  "image": "img/headphones.jpg",
+  "name": "over-ear headphones",
+  "category": "Headphones",
+  "expected": "25"
+ },
+ {
+  "id": "seed_headphones_condition",
+  "task": "condition",
+  "field": "condition",
+  "image": "img/headphones.jpg",
+  "name": "over-ear headphones",
+  "category": "Headphones",
+  "expected": "good"
+ },
+ {
+  "id": "seed_keyboard_price",
+  "task": "pricing",
+  "field": "price",
+  "image": "img/keyboard.jpg",
+  "name": "mechanical keyboard",
+  "category": "electronics",
+  "expected": "40"
+ },
+ {
+  "id": "seed_keyboard_condition",
+  "task": "condition",
+  "field": "condition",
+  "image": "img/keyboard.jpg",
+  "name": "mechanical keyboard",
+  "category": "electronics",
+  "expected": "good"
+ },
+ {
+  "id": "seed_cable_brand",
+  "task": "identification",
+  "field": "brand",
+  "image": "img/cable.jpg",
+  "name": "coiled keyboard cable",
+  "category": "accessories",
+  "expected": "Unbranded"
+ },
+ {
+  "id": "seed_cable_price",
+  "task": "pricing",
+  "field": "price",
+  "image": "img/cable.jpg",
+  "name": "coiled keyboard cable",
+  "category": "accessories",
+  "expected": "12"
+ }
+]

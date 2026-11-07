@@ -19,7 +19,7 @@ from uagents_core.contrib.protocols.payment import (
     CancelPayment, CommitPayment, CompletePayment, Funds, RejectPayment, RequestPayment, payment_protocol_spec,
 )
 
-from .. import brain, commerce, config, llm, payments, store
+from .. import brain, commerce, config, llm, payments, store, subq
 from .common import card_msg, money, now, parse_selection, seed_for, text_msg
 from .protocols import AppraiseRequest, AppraiseResult, make_appraisal_protocol
 
@@ -135,6 +135,16 @@ def detail(p: dict) -> dict:
     if p.get("comps"):
         c = p["comps"][0]
         rows.append({"label": "Price comp", "value": f"{c.get('source', 'listing')}: {money(c.get('price'))}"})
+    t = p.get("trust") or {}
+    if t:
+        bits = []
+        if t.get("photo_matches") is not None:
+            bits.append(f"photo matches {round(100 * t['photo_matches'])}%")
+        if t.get("brand_visible") is not None:
+            bits.append(f"brand visible {round(100 * t['brand_visible'])}%")
+        if "brand_unverified" in (t.get("flags") or []):
+            bits.append("brand claim removed")
+        rows.append({"label": "Verified by SubQ Snap", "value": ", ".join(bits) or t.get("verdict", "")})
     if p.get("real_photo_url"):
         rows.append({"label": "Unedited photo", "value": p["real_photo_url"]})
     payload = {"title": p["title"], "summary_rows": rows,
@@ -196,8 +206,11 @@ async def classify(text: str, st: dict) -> dict:
 
 
 async def send_browse(ctx: Context, sender: str, st: dict, query: str = "", max_price: float = 0) -> None:
-    results = commerce.search(query, max_price or None)
+    results, info = await commerce.smart_search(query, max_price or None)
     note = ""
+    if info.get("engine") == "subq":
+        store.log_activity("subq", what="shelf search", query=query, scored=info.get("scored"),
+                           top=[(store.get_item(i) or {}).get("title", i) + f" {p:.2f}" for i, p in info.get("top", [])])
     if not results and (query or max_price):
         results = commerce.search("", max_price or None) or commerce.search("")
         note = "I couldn't find an exact match, but here's what's on the shelf right now. "
@@ -262,7 +275,11 @@ async def handle_offer(ctx: Context, sender: str, st: dict, it: dict | None, amo
     payload = {"title": f"Counter-offer: {money(res['amount'])}",
                "summary_rows": [{"label": "Item", "value": p["title"]},
                                 {"label": "Your offer", "value": money(amount)},
-                                {"label": "Capy's counter", "value": money(res["amount"])}],
+                                {"label": "Capy's counter", "value": money(res["amount"])}]
+               + ([{"label": "Strategy (SubQ Snap)",
+                    "value": f"{res['strategy']['strategy'].replace('_', ' ')} · "
+                             f"{round(100 * (res['strategy'].get('confidence') or 0))}% confidence"}]
+                  if res.get("strategy") else []),
                "approve_cta": {"label": f"Accept {money(res['amount'])}", "primary": True,
                                "selection": {"action": "accept_counter", "item_id": it["id"],
                                              "amount": str(res["amount"])}},
@@ -407,19 +424,32 @@ async def handle_my_listings(ctx: Context, sender: str, st: dict) -> None:
     _save(ctx, sender, st)
     pubs = [commerce.public_item(i) for i in items]
     text = (f"You have {stats['listed']} items listed ({money(stats['listed_value'])}), {stats['reserved']} reserved "
-            f"and {stats['sold']} sold ({money(stats['revenue'])} earned). Room made: {stats['sold']} things! 🍊")
+            f"and {stats['sold']} sold ({money(stats['revenue'])} earned). Room made: {stats["sold"]} thing{"s" if stats["sold"] != 1 else ""}! 🍊")
     await ctx.send(sender, card_msg(text, "carousel", carousel("Your listings", pubs)))
 
 
+PERSONA = ("You are Capy Kondo, a calm, warm capybara who helps people declutter by selling things they no longer "
+           "need, and helps buyers find good secondhand items. Reply in 1-2 short sentences and invite them to "
+           "browse or to send a photo of clutter to sell.")
+
+
 async def chitchat(ctx: Context, sender: str, text: str) -> None:
-    try:
-        reply = await llm.muse_text([{"role": "user", "content": text}], effort="minimal", max_output_tokens=160,
-                                    instructions=("You are Capy Kondo, a calm, warm capybara who helps people declutter "
-                                                  "by selling things they no longer need, and helps buyers find "
-                                                  "good secondhand items. Reply in 1-2 short sentences and invite "
-                                                  "them to browse or to send a photo of clutter to sell."))
-    except Exception:  # noqa: BLE001
-        reply = "Hi! I'm Capy Kondo. Want to browse secondhand finds, or sell some clutter?"
+    reply = ""
+    if config.ASI1_API_KEY:  # Fetch.ai's own LLM for small talk
+        try:
+            from openai import AsyncOpenAI
+            asi = AsyncOpenAI(base_url="https://api.asi1.ai/v1", api_key=config.ASI1_API_KEY, timeout=30)
+            r = await asi.chat.completions.create(model=config.ASI1_MODEL, max_tokens=160, messages=[
+                {"role": "system", "content": PERSONA}, {"role": "user", "content": text}])
+            reply = (r.choices[0].message.content or "").strip()
+        except Exception as e:  # noqa: BLE001
+            log.warning("ASI:One chat failed: %s", e)
+    if not reply:
+        try:
+            reply = await llm.muse_text([{"role": "user", "content": text}], effort="minimal", max_output_tokens=160,
+                                        instructions=PERSONA)
+        except Exception:  # noqa: BLE001
+            reply = "Hi! I'm Capy Kondo. Want to browse secondhand finds, or sell some clutter?"
     await ctx.send(sender, text_msg(reply))
 
 
@@ -489,6 +519,21 @@ async def on_chat(ctx: Context, sender: str, msg: ChatMessage):
         return
     store.log_activity("chat", agent="capy-kondo", sender=sender[:14] + "…", text=text[:140])
     try:
+        if subq.enabled() and not text.lstrip().startswith("{"):
+            try:
+                st = _state(ctx, sender)
+                risk = await subq.buyer_risk(text, st.get("history", []))
+                st["history"] = (st.get("history", []) + [text[:300]])[-8:]
+                _save(ctx, sender, st)
+                if risk["scam"] >= 0.6 or risk["abusive"] >= 0.8:
+                    store.log_activity("subq", what="blocked message", scam=round(risk["scam"], 2),
+                                       abusive=round(risk["abusive"], 2), text=text[:100])
+                    await ctx.send(sender, text_msg(
+                        "🍊 For everyone's safety I only do deals inside ASI:One - no off-platform payments, gift cards, "
+                        "codes or outside links. Happy to help you browse or make an offer here!"))
+                    return
+            except Exception as e:  # noqa: BLE001
+                log.warning("SubQ risk gate skipped: %s", e)
         await dispatch(ctx, sender, text)
     except Exception as e:  # noqa: BLE001
         log.exception("dispatch failed")

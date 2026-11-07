@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Capy Kondo</title>
+  <link rel="icon" href="/static/img/capy_logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <img src="/static/img/capy_logo.png" alt="" class="brand-logo" onerror="this.style.display='none'">
+      <div>
+        <div class="brand-name">Capy Kondo</div>
+        <div class="brand-tag">Make room for what matters.</div>
+      </div>
+    </div>
+    <div class="stats" id="stats">
+      <div class="stat"><span class="stat-v" id="st-listed">0</span><span class="stat-k">listed</span></div>
+      <div class="stat"><span class="stat-v" id="st-value">$0</span><span class="stat-k">on the shelf</span></div>
+      <div class="stat"><span class="stat-v" id="st-sold">0</span><span class="stat-k">sold</span></div>
+      <div class="stat"><span class="stat-v" id="st-rev">$0</span><span class="stat-k">earned</span></div>
+    </div>
+    <div class="agent-pill" id="agent-pill" title="Fetch.ai agents">
+      <span class="dot"></span><span id="agent-pill-text">Agents starting…</span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="left">
+      <div class="stage" id="stage">
+        <div class="media-box" id="media-box">
+          <video id="cam" playsinline muted autoplay></video>
+          <img id="shot" alt="">
+          <video id="clip" playsinline muted loop></video>
+          <svg id="overlay" preserveAspectRatio="none"></svg>
+          <div id="tags" class="tags"></div>
+        </div>
+        <div class="empty" id="empty">
+          <img src="/static/img/capy_sleep.png" alt="" onerror="this.style.display='none'">
+          <h2>Point your camera at the clutter.</h2>
+          <p>Capy finds every item, cuts it out with real pixels, checks its condition, prices it from live
+            listings, and sells it for you on ASI:One.</p>
+          <button class="btn primary" id="btn-start-cam">Start camera</button>
+        </div>
+        <div class="hud-left" id="hud-state"><span class="pulse"></span><span id="hud-text">Ready</span></div>
+        <div class="hud-right" id="hud-total" hidden>
+          <span class="hud-k">This haul</span><span class="hud-v" id="hud-total-v">$0</span>
+        </div>
+        <div class="controls">
+          <button class="btn glass" id="btn-snap" disabled>📸 Snap photo</button>
+          <button class="btn glass" id="btn-rec" disabled>🎥 Scan 6s video</button>
+          <label class="btn glass" for="file">⬆ Upload<input type="file" id="file" accept="image/*,video/*" hidden></label>
+          <span class="sep"></span>
+          <button class="btn glass subtle" id="btn-sample">Sample photo</button>
+          <button class="btn glass subtle" id="btn-sample-video">Sample video</button>
+          <select id="cam-select" class="glass-select" title="Camera" hidden></select>
+        </div>
+      </div>
+
+      <ol class="pipeline" id="pipeline">
+        <li data-stage="discover"><div class="p-ico">🔎</div><div class="p-body"><div class="p-title">Find every item</div><div class="p-model">Meta · Muse Spark 1.3</div></div><div class="p-time"></div></li>
+        <li data-stage="segment"><div class="p-ico">✂️</div><div class="p-body"><div class="p-title">Cut out real pixels</div><div class="p-model">Meta · SAM 3.1</div></div><div class="p-time"></div></li>
+        <li data-stage="appraise"><div class="p-ico">🏷️</div><div class="p-body"><div class="p-title">Inspect · price · stage</div><div class="p-model">Gemini 4 Argon · Muse + web search · Nano Banana 2.1</div></div><div class="p-time"></div></li>
+        <li data-stage="listed"><div class="p-ico">🍊</div><div class="p-body"><div class="p-title">Selling on ASI:One</div><div class="p-model">Fetch.ai · Capy Kondo agent</div></div><div class="p-time"></div></li>
+      </ol>
+    </section>
+
+    <aside class="right">
+      <nav class="tabs" id="tabs">
+        <button class="tab active" data-tab="listings">Listings <span class="badge" id="tab-n">0</span></button>
+        <button class="tab" data-tab="brain">Capy's Brain <span class="badge" id="tab-v">v0</span></button>
+        <button class="tab" data-tab="activity">Live activity <span class="badge live" id="tab-a">●</span></button>
+      </nav>
+      <div class="panel" id="panel-listings">
+        <div class="grid" id="grid"></div>
+        <div class="panel-empty" id="grid-empty">No listings yet. Snap your clutter to get started.</div>
+      </div>
+      <div class="panel" id="panel-brain" hidden>
+        <div class="brain-head">
+          <img src="/static/img/capy_brain.png" alt="" onerror="this.style.display='none'">
+          <div>
+            <div class="brain-title">Playbook <span id="brain-v">v0</span></div>
+            <div class="brain-sub">Every correction becomes a candidate lesson. It's kept only if it fixes that case
+              <b>and</b> doesn't hurt accuracy on held-out examples it has never seen. Otherwise it's rolled back.
+              Each decision is a git commit.</div>
+          </div>
+        </div>
+        <div id="brain-live"></div>
+        <div id="brain-list"></div>
+        <details class="gitlog"><summary>git log</summary><pre id="brain-log"></pre></details>
+      </div>
+      <div class="panel" id="panel-activity" hidden>
+        <ul class="feed" id="feed"></ul>
+      </div>
+      <div class="agents-box" id="agents-box"></div>
+    </aside>
+  </main>
+
+  <div class="drawer-bg" id="drawer-bg" hidden></div>
+  <div class="drawer" id="drawer" hidden></div>
+  <div class="toasts" id="toasts"></div>
+  <canvas id="confetti"></canvas>
+  <script src="/static/app.js"></script>
+</body>
+</html>

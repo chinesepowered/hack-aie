@@ -29,7 +29,15 @@ def public_item(item: dict) -> dict:
         "real_photo": d.get("context"), "real_photo_url": config.public_url(d["context"]) if d.get("context") else None,
         "flaws": d.get("flaws", []), "condition_evidence": d.get("condition_evidence"),
         "comps": d.get("comps", []), "market_price": d.get("market_price"), "seen": d.get("seen"),
+        "trust": _trust_public(d.get("trust")),
     }
+
+
+def _trust_public(t: dict | None) -> dict | None:
+    if not t:
+        return None
+    return {k: t.get(k) for k in ("photo_matches", "brand_visible", "condition", "condition_confidence",
+                                  "description_score", "verdict", "flags", "trust", "model")}
 
 
 def _tokens(s: str) -> set[str]:
@@ -56,6 +64,26 @@ def search(query: str = "", max_price: float | None = None, limit: int = 8) -> l
         scored.append((s, -float(it.get("price") or 0), it))
     scored.sort(key=lambda x: (-x[0], x[1]))
     return [public_item(x[2]) for x in scored[:limit]]
+
+
+async def smart_search(query: str = "", max_price: float | None = None, limit: int = 8) -> tuple[list[dict], dict]:
+    """Semantic search: SubQ Snap scores the whole shelf against the buyer's words in one long-context call.
+    Falls back to keyword search. Returns (results, info)."""
+    from . import subq
+    q = (query or "").strip()
+    items = [i for i in store.list_items(("listed",))
+             if max_price is None or float(i.get("price") or 0) <= max_price]
+    if not q or len(q) < 3 or not subq.enabled() or not items:
+        return search(q, max_price, limit), {"engine": "keyword"}
+    try:
+        scored = await subq.match_catalog(q + (f" (budget ${max_price:g})" if max_price else ""), items)
+        by_id = {i["id"]: i for i in items}
+        hits = [(iid, p) for iid, p in scored if p >= 0.5][:limit]
+        res = [public_item(by_id[iid]) | {"match": round(p, 2)} for iid, p in hits]
+        return res, {"engine": "subq", "scored": len(scored), "top": scored[:3]}
+    except Exception as e:  # noqa: BLE001
+        log.warning("SubQ search failed, keyword fallback: %s", e)
+        return search(q, max_price, limit), {"engine": "keyword"}
 
 
 def resolve_item(ref: str) -> dict | None:
@@ -92,22 +120,51 @@ def decide_offer(price: float, floor: float, amount: float, round_no: int) -> tu
     return "counter", float(target)
 
 
+def strategy_to_amount(strategy: str, price: float, floor: float, amount: float) -> tuple[str, float]:
+    """Map SubQ's strategy choice to a concrete number. The floor is enforced here, in code."""
+    floor = min(floor, price)
+    if strategy == "accept":
+        return ("accept", round(amount, 2)) if amount >= floor else ("counter", float(max(floor, round(floor))))
+    if strategy == "counter_meet_middle":
+        target = (amount + price) / 2
+    elif strategy == "counter_firm":
+        target = price * 0.95
+    else:  # final_offer
+        target = floor + (price - floor) * 0.25
+    target = float(min(price, max(floor, round(target))))
+    if target <= amount:
+        return "accept", round(max(amount, floor), 2)
+    return "counter", target
+
+
 async def offer(item_id: str, buyer: str, amount: float) -> dict:
+    from . import subq
     item = store.get_item(item_id)
     if not item or item["status"] != "listed":
         return {"ok": False, "message": "Sorry, that one is no longer available."}
     price, floor = float(item["price"] or 0), float(item.get("floor_price") or item["price"] or 0)
     rnd = _rounds(item_id, buyer)
     decision, value = decide_offer(price, floor, float(amount), rnd)
+    strategy = None
+    if subq.enabled() and float(amount) < price:
+        try:
+            hist = store.query("SELECT amount, status AS decision, counter FROM offers WHERE item_id=? AND buyer=? "
+                               "ORDER BY created_at", (item_id, buyer))
+            strategy = await subq.negotiate(item, float(amount), rnd, hist)
+            decision, value = strategy_to_amount(strategy["strategy"], price, floor, float(amount))
+        except Exception as e:  # noqa: BLE001
+            log.warning("SubQ negotiation unavailable, rule fallback: %s", e)
     oid = store.new_id("offer")
     store.execute("INSERT INTO offers VALUES (?,?,?,?,?,?,?,?,?)",
                   (oid, item_id, time.time(), buyer, float(amount), decision,
                    value if decision == "counter" else None, rnd + 1, None))
     msg = await _offer_message(item, float(amount), decision, value, rnd)
     store.log_activity("offer", item_id=item_id, title=item.get("title"), buyer=_short(buyer), amount=float(amount),
-                       decision=decision, value=value)
+                       decision=decision, value=value,
+                       subq=({"strategy": strategy["strategy"], "confidence": strategy.get("confidence"),
+                              "serious": strategy.get("serious")} if strategy else None))
     return {"ok": True, "decision": decision, "amount": value, "offer_id": oid, "message": msg,
-            "item": public_item(item)}
+            "item": public_item(item), "strategy": strategy}
 
 
 async def _offer_message(item: dict, amount: float, decision: str, value: float, rnd: int) -> str:

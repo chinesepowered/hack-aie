@@ -23,6 +23,8 @@ STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "")
 AGENTVERSE_API_KEY = os.environ.get("AGENTVERSE_API_KEY", "")
 PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "").rstrip("/")
+ASI1_API_KEY = os.environ.get("ASI1_API_KEY", "")
+ASI1_MODEL = os.environ.get("CAPY_ASI1_MODEL", "asi1-mini")
 
 HOST = os.environ.get("CAPY_HOST", "0.0.0.0")
 PORT = int(os.environ.get("CAPY_PORT", "8787"))

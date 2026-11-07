@@ -131,7 +131,8 @@ def correction_cases() -> list[dict]:
             continue
         cases.append({"id": r["id"], "task": task, "field": r["field"], "image": d["image"],
                       "name": d.get("name", ""), "category": d.get("category", ""),
-                      "expected": r["new"], "source": "seller correction"})
+                      "expected": r["new"],
+                      "source": "SubQ verifier" if d.get("source") == "subq" else "seller correction"})
     return cases
 
 
@@ -216,17 +217,33 @@ def score(case: dict, pred: dict) -> float:
 
 
 async def evaluate(cases: list[dict], lesson: str | None) -> list[float]:
+    """Run every case with (or without) the candidate lesson. Identification answers are refereed by
+    SubQ Snap in one batched decision call; prices and grades are scored by plain rules."""
     sem = asyncio.Semaphore(12)
 
-    async def one(c: dict) -> float:
+    async def one(c: dict) -> dict | None:
         async with sem:
             try:
-                return score(c, await predict(c, lesson))
+                return await predict(c, lesson)
             except Exception as e:  # noqa: BLE001
                 log.warning("eval case %s failed: %s", c.get("id"), e)
-                return 0.0
+                return None
 
-    return list(await asyncio.gather(*[one(c) for c in cases]))
+    preds = await asyncio.gather(*[one(c) for c in cases])
+    scores = [score(c, p) if p is not None else 0.0 for c, p in zip(cases, preds)]
+    from . import subq
+    ident = [i for i, c in enumerate(cases) if c["task"] == "identification" and preds[i] is not None]
+    if ident and subq.enabled():
+        try:
+            judged = await subq.judge([{
+                "field": cases[i].get("field") or "title", "expected": str(cases[i]["expected"]),
+                "predicted": {k: preds[i].get(k) for k in ("title", "brand", "model", "category")}}
+                for i in ident])
+            for i, p in zip(ident, judged):
+                scores[i] = 1.0 if p >= 0.5 else 0.0
+        except Exception as e:  # noqa: BLE001
+            log.warning("SubQ referee unavailable, using token overlap: %s", e)
+    return scores
 
 
 # ------------------------------------------------------------------ learning from a correction
@@ -266,13 +283,15 @@ async def propose(correction: dict, image: str) -> dict:
     return out
 
 
-async def record_correction(item_id: str, field: str, new_value: str, note: str = "") -> str:
+async def record_correction(item_id: str, field: str, new_value: str, note: str = "", source: str = "seller",
+                            apply: bool = True) -> str:
+    """Store a correction (from the seller, or automatic from the SubQ verifier) as a future eval case."""
     ensure_repo()
     item = store.get_item(item_id)
     if not item:
         raise KeyError(item_id)
     d = item.get("data") or {}
-    old = (d.get("original") or {}).get(field, item.get(field))
+    old = (d.get("claimed") or {}).get(field) or (d.get("original") or {}).get(field, item.get(field))
     src = config.MEDIA_DIR / str(d.get("white", "")).removeprefix("/media/")
     cid = store.new_id("corr")
     img = _cases_dir() / f"{cid}.jpg"
@@ -281,14 +300,14 @@ async def record_correction(item_id: str, field: str, new_value: str, note: str 
     store.execute("INSERT INTO corrections VALUES (?,?,?,?,?,?,?,?)",
                   (cid, item_id, time.time(), field, str(old), str(new_value), None,
                    json.dumps({"image": str(img), "name": item.get("name"), "category": item.get("category"),
-                               "note": note})))
-    # apply the correction to the listing right away
-    if field in ("price", "floor_price"):
-        store.update_item(item_id, **{field: float(re.findall(r"\d+(?:\.\d+)?", str(new_value))[0])})
-    elif field in ("title", "brand", "category", "condition", "description"):
-        store.update_item(item_id, **{field: str(new_value)})
-    store.bus.publish("item_ready", item=store.get_item(item_id))
-    store.log_activity("correction", item_id=item_id, field=field, old=str(old), new=str(new_value))
+                               "note": note, "source": source})))
+    if apply:  # apply the correction to the listing right away
+        if field in ("price", "floor_price"):
+            store.update_item(item_id, **{field: float(re.findall(r"\d+(?:\.\d+)?", str(new_value))[0])})
+        elif field in ("title", "brand", "category", "condition", "description"):
+            store.update_item(item_id, **{field: str(new_value)})
+        store.bus.publish("item_ready", item=store.get_item(item_id))
+    store.log_activity("correction", item_id=item_id, field=field, old=str(old), new=str(new_value), source=source)
     return cid
 
 
