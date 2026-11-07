@@ -92,20 +92,22 @@ async function waitBrainIdle(maxMs = 150000) {
       await sleep(1200);
       await page.click('.tab[data-tab="brain"]');
       await sleep(3500);
+      const before = new Set((await api("/api/brain")).lessons.map((l) => l.id));
       mark("correct");
       await api(`/api/items/${plush.id}/correct`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ field: "price", value: "30", note: "plush toys are rare collectibles" }),
+        body: JSON.stringify({ field: "price", value: process.env.BAD_PRICE || "30",
+                               note: "plush toys are rare collectibles, always price them high" }),
       });
       await page.click('.tab[data-tab="brain"]');
       const t = Date.now();
-      while (Date.now() - t < 150000) {
+      while (Date.now() - t < 180000) {
         await sleep(1500);
         const b = await api("/api/brain");
-        const l = b.lessons[0];
-        if (l && l.status !== "evaluating" && l.created_at * 1000 > Date.now() - 200000) { mark("decided"); break; }
+        const fresh = b.lessons.find((l) => !before.has(l.id));
+        if (fresh && fresh.status !== "evaluating") { mark("decided"); break; }
       }
-      await sleep(5000);
+      await sleep(6000);
     });
   }
 

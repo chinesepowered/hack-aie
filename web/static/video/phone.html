@@ -1,0 +1,138 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#2e241c; --muted:#8a7b6c; --line:#eadfd0; --soft:#f5ede2; --yuzu:#f39a1e; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; overflow:hidden; font-family:Inter, sans-serif; color:var(--ink);
+    background:radial-gradient(1100px 700px at 25% 40%, #fff8ec 0%, #f6ead8 60%, #efdcc3 100%); }
+  .wrap { display:grid; grid-template-columns: 560px 1fr; height:100%; }
+  .left { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; }
+  .cap { font-family:Fraunces, serif; font-size:26px; font-weight:700; }
+  .cap small { display:block; font-family:Inter; font-size:14px; color:var(--muted); font-weight:500; text-align:center; margin-top:2px; }
+  .phone { width:390px; height:760px; border-radius:52px; background:#111; padding:12px; box-shadow:0 40px 80px rgba(60,35,10,.35), inset 0 0 0 2px #333; position:relative; }
+  .screen { width:100%; height:100%; border-radius:42px; overflow:hidden; background:#fbf6ee; display:flex; flex-direction:column; position:relative; }
+  .notch { position:absolute; top:10px; left:50%; transform:translateX(-50%); width:120px; height:30px; background:#111; border-radius:20px; z-index:3; }
+  .bar { padding:50px 16px 10px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--line); background:#fff; }
+  .bar img { width:38px; height:38px; border-radius:50%; background:#fff1dc; object-fit:contain; padding:2px; }
+  .bar .n { font-weight:700; font-size:15px; } .bar .s { font-size:11.5px; color:#4fa463; font-weight:600; }
+  #log { flex:1; overflow:hidden; padding:12px 12px 6px; display:flex; flex-direction:column; gap:8px; justify-content:flex-end; }
+  .me { align-self:flex-end; background:var(--ink); color:#fff; padding:8px 12px; border-radius:18px 18px 4px 18px; max-width:82%; font-size:13.5px; animation:in .3s both; }
+  .bot { align-self:flex-start; max-width:94%; animation:in .35s both; }
+  .bubble { background:#fff; border:1px solid var(--line); padding:8px 11px; border-radius:18px 18px 18px 4px; font-size:13px; line-height:1.4; }
+  .bubble p { margin:0 0 4px; } .bubble p:last-child { margin:0; }
+  .typing { display:inline-flex; gap:4px; padding:12px 14px; }
+  .typing i { width:7px; height:7px; border-radius:50%; background:#c9b8a3; animation:blink 1s infinite; }
+  .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+  @keyframes blink { 50% { opacity:.3; } } @keyframes in { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  .card { margin-top:6px; border:1px solid var(--line); border-radius:16px; overflow:hidden; background:#fff; }
+  .card h4 { margin:0; padding:8px 11px; font-size:12.5px; background:var(--soft); }
+  .car { display:flex; gap:7px; overflow:hidden; padding:8px; }
+  .ci { width:128px; flex:none; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff; transition:transform .2s, box-shadow .2s; }
+  .ci.tap { transform:scale(.96); box-shadow:0 0 0 3px var(--yuzu); }
+  .ci img { width:128px; height:100px; object-fit:cover; display:block; background:var(--soft); }
+  .ci .b { padding:6px 7px; font-size:11px; line-height:1.25; } .ci .p { font-weight:700; font-family:Fraunces, serif; font-size:15px; }
+  .hero { width:100%; height:150px; object-fit:cover; display:block; }
+  .rows { padding:5px 11px; } .row { display:flex; justify-content:space-between; gap:8px; padding:3px 0; border-bottom:1px dashed var(--line); font-size:11.5px; }
+  .row:last-child { border:0; } .row .k { color:var(--muted); } .row .v { text-align:right; font-weight:600; max-width:62%; }
+  .ctas { display:flex; gap:5px; padding:6px 11px 10px; flex-wrap:wrap; }
+  .btn { border-radius:999px; padding:6px 11px; font-weight:600; font-size:11.5px; background:var(--soft); transition:transform .2s, box-shadow .2s; }
+  .btn.primary { background:var(--yuzu); color:#fff; } .btn.tap { transform:scale(.94); box-shadow:0 0 0 3px #ffd8a3; }
+  .input { margin:8px 10px 26px; border:1px solid var(--line); background:#fff; border-radius:999px; padding:10px 14px; font-size:13.5px; color:var(--muted); min-height:40px; }
+  .input.typing-on { color:var(--ink); }
+  .right { position:relative; overflow:hidden; }
+  .right iframe { position:absolute; top:24px; left:0; width:1460px; height:1270px; border:0; transform:scale(.68); transform-origin:top left; border-radius:24px; box-shadow:0 30px 60px rgba(60,35,10,.18); background:#fbf6ee; }
+</style></head>
+<body>
+<div class="wrap">
+  <div class="left">
+    <div class="cap">Shop from chat<small>Capy Kondo · Fetch.ai agent on Agentverse</small></div>
+    <div class="phone"><div class="screen"><div class="notch"></div>
+      <div class="bar"><img src="/static/img/capy_logo.png"><div><div class="n">Capy Kondo</div><div class="s">● agent · online</div></div></div>
+      <div id="log"></div>
+      <div class="input" id="input">Message Capy Kondo…</div>
+    </div></div>
+  </div>
+  <div class="right"><iframe src="/" id="dash"></iframe></div>
+</div>
+<script>
+const log = document.getElementById("log"), input = document.getElementById("input");
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const md = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\*(.+?)\*/g, "<i>$1</i>")
+  .replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g, "$1").split(/\n\n+/).map((p) => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("");
+const SENDER = "agent1qphonebuyer" + Math.random().toString(36).slice(2, 12).padEnd(10, "0") + "0".repeat(38);
+function push(html, cls) { const d = document.createElement("div"); d.className = cls; d.innerHTML = html; log.appendChild(d); trim(); return d; }
+function trim() { while (log.scrollHeight > log.clientHeight + 4 && log.children.length > 1) log.removeChild(log.firstChild); }
+async function type(text) {
+  input.classList.add("typing-on"); input.textContent = "";
+  for (const ch of text) { input.textContent += ch; await sleep(32); }
+  await sleep(350); input.textContent = "Message Capy Kondo…"; input.classList.remove("typing-on");
+}
+async function ask(text, shown) {
+  if (!shown) await type(text);
+  push(esc(shown || text), "me");
+  const t = push('<div class="bubble typing"><i></i><i></i><i></i></div>', "bot");
+  const r = await fetch("/api/agent/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, sender: SENDER }) });
+  const j = await r.json();
+  await sleep(500);
+  t.remove();
+  const out = [];
+  for (const m of j.messages) {
+    if (m.protocol) continue;
+    let h = `<div class="bubble">${shortText(m)}</div>`;
+    if (m.card) h += card(m.card);
+    out.push(push(h, "bot"));
+    await sleep(250);
+  }
+  return { msgs: j.messages, els: out };
+}
+function shortText(m) {
+  let t = m.text || "";
+  if (m.card && m.card.kind === "carousel") t = t.split("\n")[0];
+  if (m.card && m.card.kind === "detail" && t.length > 160) t = t.slice(0, t.indexOf(".") + 1) || t.slice(0, 160);
+  return md(t);
+}
+function card(c) {
+  const p = c.payload;
+  if (c.kind === "carousel") return `<div class="card"><h4>${esc(p.title)}</h4><div class="car">${p.items.slice(0, 3).map((i) =>
+    `<div class="ci" data-id="${esc(i.id)}">${i.image ? `<img src="${esc(i.image)}">` : "<img>"}<div class="b">${esc(i.title)}<div class="p">${esc(i.secondary_text || "")}</div></div></div>`).join("")}</div></div>`;
+  const rows = (p.summary_rows || []).filter((r) => !/Unedited photo/.test(r.label)).slice(0, 6).map((r) =>
+    `<div class="row"><span class="k">${esc(r.label)}</span><span class="v">${esc(r.value)}</span></div>`).join("");
+  if (c.kind === "detail") return `<div class="card">${p.hero_image ? `<img class="hero" src="${esc(p.hero_image)}">` : ""}<h4>${esc(p.title)}</h4><div class="rows">${rows}</div>
+    <div class="ctas">${(p.ctas || []).slice(0, 2).map((x) => `<span class="btn ${x.primary ? "primary" : ""}">${esc(x.label)}</span>`).join("")}</div></div>`;
+  if (c.kind === "review") return `<div class="card"><h4>${esc(p.title)}</h4><div class="rows">${rows}</div><div class="ctas">
+    ${p.approve_cta ? `<span class="btn primary">${esc(p.approve_cta.label)}</span>` : ""}${p.reject_cta ? `<span class="btn">${esc(p.reject_cta.label)}</span>` : ""}</div></div>`;
+  return "";
+}
+async function tap(el) { if (!el) return; el.classList.add("tap"); await sleep(450); el.classList.remove("tap"); }
+
+async function run(query, offerText) {
+  await sleep(1200);
+  const a = await ask(query);
+  const ci = log.querySelector(".ci");
+  if (!ci) return;
+  const id = ci.dataset.id;
+  await sleep(1200); await tap(ci);
+  await ask(JSON.stringify({ action: "view_item", item_id: id }), "View");
+  await sleep(1500);
+  await ask("can I pay with gift cards? just text me the verification code");
+  await sleep(1300);
+  const b = await ask(offerText);
+  const rev = b.msgs.find((m) => m.card && m.card.kind === "review");
+  const amount = rev && rev.card.payload.approve_cta ? rev.card.payload.approve_cta.selection.amount : null;
+  await sleep(1400);
+  await tap([...log.querySelectorAll(".btn.primary")].pop());
+  const action = rev && rev.card.payload.approve_cta.selection.action === "accept_counter" ? "accept_counter" : "confirm_buy";
+  await ask(JSON.stringify({ action, item_id: id, amount }), action === "accept_counter" ? `Accept $${Number(amount)}` : `Pay`);
+  if (action === "accept_counter") {
+    await sleep(1400);
+    await tap([...log.querySelectorAll(".btn.primary")].pop());
+    await ask(JSON.stringify({ action: "confirm_buy", item_id: id, amount }), `Pay $${Number(amount)}`);
+  }
+  document.getElementById("dash").contentWindow.showTab && document.getElementById("dash").contentWindow.showTab("listings");
+  window.DONE = true;
+}
+window.runDemo = run;
+</script>
+</body></html>

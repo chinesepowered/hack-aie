@@ -592,7 +592,7 @@ async function refreshActivity() {
 
 function feedLine(e) {
   switch (e.activity_kind) {
-    case "chat": return ["💬", `${e.sender === "test console" ? "Buyer" : "ASI:One buyer"} → <b>Capy Kondo</b>: “${esc(e.text)}”`];
+    case "chat": return ["💬", `${e.sender === "test console" ? "Buyer" : "ASI:One buyer"} → <b>Capy Kondo</b>: ${chatText(e.text)}`];
     case "offer": return ["🤝", `Offer ${money(e.amount)} on ${esc(e.title)} → <b>${esc(e.decision)}</b> ${e.decision === "counter" ? money(e.value) : ""}${e.subq ? ` <span class="s">(SubQ: ${esc(e.subq.strategy)} ${pct(e.subq.confidence)})</span>` : ""}`];
     case "reserved": return ["⏳", `${esc(e.title)} reserved for ${money(e.amount)}`];
     case "sold": return ["🎉", `<b>Sold</b> ${esc(e.title)} for ${money(e.amount)} (${esc(e.method)})`];
@@ -606,6 +606,18 @@ function feedLine(e) {
   }
 }
 
+
+const CARD_ACTIONS = { view_item: "opened an item card", offer: "sent an offer", offer_form: "asked to make an offer",
+  accept_counter: "accepted the counter-offer", confirm_buy: "tapped Pay", buy: "tapped Buy", browse: "kept browsing", cancel: "declined" };
+function chatText(t) {
+  t = String(t || "").trim();
+  if (t.startsWith("{")) {
+    try { const j = JSON.parse(t); return `<i>${esc(CARD_ACTIONS[j.action] || "tapped a card")}${j.amount ? " (" + money(Number(j.amount)) + ")" : ""}</i>`; }
+    catch (e) { /* fall through */ }
+  }
+  return `“${esc(t)}”`;
+}
+
 function addFeed(e, live) {
   const [ico, html] = feedLine(e);
   const li = document.createElement("li");
@@ -613,7 +625,7 @@ function addFeed(e, live) {
   li.innerHTML = `<div class="ico">${ico}</div><div><div class="t">${html}</div><div class="s">${ts}</div></div>`;
   $("#feed").prepend(li);
   while ($("#feed").children.length > 80) $("#feed").lastChild.remove();
-  if (live && e.activity_kind === "chat") toast(`💬 ${e.sender === "test console" ? "Buyer" : "ASI:One buyer"}: “${esc(e.text)}”`);
+  if (live && e.activity_kind === "chat" && !String(e.text || "").trim().startsWith("{")) toast(`💬 ${e.sender === "test console" ? "Buyer" : "ASI:One buyer"}: “${esc(e.text)}”`);
   if (live && ["offer", "sold", "lesson"].includes(e.activity_kind)) refreshStats();
 }
 

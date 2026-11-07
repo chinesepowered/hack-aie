@@ -38,10 +38,14 @@ def narration() -> list[dict]:
         kind = (trust.get("name") or "this item").lower()
         bv = round(100 * t["brand_visible"])
         price_line = f"worth {int(claimed['price'])} dollars" if claimed.get("price") else ""
-        s3 = (f"But models can be overconfident. Muse guessed this {kind} was {claimed['brand']} {price_line}. "
-              "Before anything goes live, Subquadratic's SubQ Snap checks every claim against the real photo, in "
-              f"under a second, with calibrated probabilities. Is the brand actually visible? {bv} percent. So the "
-              f"code strips the brand, and re-prices it honestly at {int(trust.get('price') or 0)} dollars.")
+        brand = claimed["brand"].title() if claimed["brand"].isupper() else claimed["brand"]
+        kind = kind.split()[-1]
+        repriced = claimed.get("price") and trust.get("price") and float(claimed["price"]) != float(trust["price"])
+        s3 = (f"But models can be overconfident. Muse guessed this {kind} was a {brand}. Before anything goes live, "
+              "Subquadratic's SubQ Snap checks every claim against the real photo, in under a second, with "
+              f"calibrated probabilities. Is that brand actually visible? {bv} percent. So the code strips the brand"
+              + (f" and re-prices it honestly at {int(trust['price'])} dollars." if repriced else
+                 " and lists it honestly."))
     else:
         s3 = ("But models can be overconfident, so before anything goes live, Subquadratic's SubQ Snap checks every "
               "claim against the real photo, in under a second, with calibrated probabilities. If a brand isn't "

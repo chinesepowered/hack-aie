@@ -11,6 +11,10 @@ from . import config, llm
 
 BACKDROP_DIR = config.MEDIA_DIR / "backdrops"
 BACKDROP_DIR.mkdir(parents=True, exist_ok=True)
+# ship pre-generated Nano Banana backdrops so the first live scans are fast
+for _f in (config.ROOT / "capykondo" / "seed" / "backdrops").glob("*.jpg"):
+    if not (BACKDROP_DIR / _f.name).exists():
+        (BACKDROP_DIR / _f.name).write_bytes(_f.read_bytes())
 _locks: dict[str, asyncio.Lock] = {}
 
 SURFACES = {

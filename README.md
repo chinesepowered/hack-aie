@@ -12,6 +12,8 @@ wins on held-out examples.
 
 <p align="center"><img src="docs/screenshot.jpg" width="900" alt="Capy Kondo scanning a table of hackathon merch"></p>
 
+**▶ Demo video (2 min):** [docs/capykondo_demo.mp4](docs/capykondo_demo.mp4)
+
 ## What happens when you scan
 
 | Step | What | Model |
@@ -65,6 +67,8 @@ Try on ASI:One: *"Any headphones under $30?"*, *"Would you take $15 for the keyb
 <photo link>"*, *"The mug should be $5"*, *"What have you learned?"*
 
 ## Run it
+
+Needs Python 3.11+ and `ffmpeg` (`brew install ffmpeg` / `apt install ffmpeg`).
 
 ```bash
 python3 -m venv .venv && . .venv/bin/activate

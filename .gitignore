@@ -29,3 +29,4 @@ node_modules/
 
 # demo video build outputs
 demo/build/
+!docs/*.mp4
