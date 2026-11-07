@@ -1,0 +1,28 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# runtime data and generated media
+data/
+runs/
+outputs/
+*.mp4
+*.webm
+*.mov
+!web/static/**/*.mp4
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# node
+node_modules/
+
+# os/editor
+.DS_Store
+.idea/
+.vscode/
