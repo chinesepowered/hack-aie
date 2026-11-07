@@ -1,0 +1,14 @@
+{
+  "name": "capykondo-demo",
+  "private": true,
+  "description": "Records the Capy Kondo demo video scenes from the running app with Playwright",
+  "scripts": {
+    "record": "node record.js && node record_phone.js",
+    "record:phone": "node record_phone.js",
+    "record:sale": "node record_sale.js"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  },
+  "packageManager": "pnpm@10.28.0"
+}

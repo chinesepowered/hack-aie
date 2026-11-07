@@ -1,6 +1,6 @@
 """Assemble the Capy Kondo demo video: ElevenLabs narration + recorded scenes + music + burned-in captions.
 
-    python demo/make_video.py            # uses demo/build/raw/*.webm from demo/record.js
+    uv run python demo/make_video.py     # uses demo/build/raw/*.webm from `pnpm record` (demo/package.json)
 Output: demo/build/capykondo_demo.mp4
 """
 from __future__ import annotations

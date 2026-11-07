@@ -5,6 +5,7 @@
 
 # runtime data and generated media
 data/
+*_data.json
 runs/
 outputs/
 *.mp4

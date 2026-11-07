@@ -661,7 +661,7 @@ async function refreshAgents() {
       <div style="margin-top:6px">🍊 Capy Kondo <code>${esc(k.address.slice(0, 14))}…</code> <a href="${esc(k.profile)}" target="_blank">profile</a> · <a href="${esc(k.inspector)}" target="_blank">inspector</a></div>
       ${ap ? `<div>🔎 Capy Appraiser <code>${esc(ap.address.slice(0, 14))}…</code> <a href="${esc(ap.profile)}" target="_blank">profile</a> · <a href="${esc(ap.inspector)}" target="_blank">inspector</a></div>` : ""}
       ${a.public_url ? `<div style="margin-top:4px">Public URL: <a href="${esc(a.public_url)}" target="_blank">${esc(a.public_url)}</a></div>` : ""}`
-      : `<b>Fetch.ai agents</b> not running (start with <code>python -m capykondo</code>).`;
+      : `<b>Fetch.ai agents</b> not running (start with <code>uv run python -m capykondo</code>).`;
   } catch (e) { /* ignore */ }
 }
 

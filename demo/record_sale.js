@@ -1,12 +1,12 @@
 // Scene 5 (seller's view): a buyer haggles and buys while the seller dashboard updates live.
 // The buyer side is the real ASI:One chat in the final cut; this records the dashboard reacting.
-//   node demo/record_sale.js demo/build/raw
+//   cd demo && pnpm record:sale
 const { chromium } = require("playwright");
 const fs = require("fs");
 const path = require("path");
 
 const BASE = process.env.CAPY_URL || "http://localhost:8787";
-const OUT = path.resolve(process.argv[2] || "demo/build/raw");
+const OUT = path.resolve(process.argv[2] || path.join(__dirname, "build", "raw"));
 const VP = { width: 1600, height: 900 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const say = async (text) => (await fetch(BASE + "/api/agent/chat", {

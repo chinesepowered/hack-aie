@@ -1,4 +1,4 @@
-"""Run a scan from the command line: python scripts/scan_cli.py path/to/photo_or_video"""
+"""Run a scan from the command line: uv run python scripts/scan_cli.py path/to/photo_or_video"""
 import asyncio, json, logging, sys, time
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))

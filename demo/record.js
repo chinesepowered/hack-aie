@@ -1,11 +1,11 @@
-// Records the demo scenes from the running app (python -m capykondo) with Playwright.
-//   node demo/record.js demo/build/raw
+// Records the demo scenes from the running app (uv run python -m capykondo) with Playwright.
+//   cd demo && pnpm install && pnpm record          (SCENES=scan,brain pnpm record for a subset)
 const { chromium } = require("playwright");
 const fs = require("fs");
 const path = require("path");
 
 const BASE = process.env.CAPY_URL || "http://localhost:8787";
-const OUT = path.resolve(process.argv[2] || "demo/build/raw");
+const OUT = path.resolve(process.argv[2] || path.join(__dirname, "build", "raw"));
 const VP = { width: 1600, height: 900 };
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -41,7 +41,8 @@ async function waitBrainIdle(maxMs = 150000) {
 
 (async () => {
   const browser = await chromium.launch();
-  const only = (process.env.SCENES || "title,scan,trust,brain,agent,closing").split(",");
+  // Scene 5 (buyer chat) comes from record_phone.js; "agent" here is the older console-based take.
+  const only = (process.env.SCENES || "title,scan,trust,brain,closing").split(",");
 
   if (only.includes("title")) await scene(browser, "1_title", async (page) => {
     await page.goto(BASE + "/static/video/title.html", { waitUntil: "networkidle" });

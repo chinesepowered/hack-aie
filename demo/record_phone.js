@@ -1,11 +1,12 @@
 // Scene 5: buyer shops from chat (phone) while the seller dashboard updates live.
-//   node demo/record_phone.js demo/build/raw
+//   cd demo && pnpm record:phone
 const { chromium } = require("playwright");
 const fs = require("fs");
 const path = require("path");
 const BASE = process.env.CAPY_URL || "http://localhost:8787";
-const OUT = path.resolve(process.argv[2] || "demo/build/raw");
+const OUT = path.resolve(process.argv[2] || path.join(__dirname, "build", "raw"));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+fs.mkdirSync(OUT, { recursive: true });
 (async () => {
   const items = await (await fetch(BASE + "/api/items")).json();
   const bottle = items.find((i) => /bottle/i.test(i.title || ""));

@@ -1,7 +1,7 @@
 """Run Capy Kondo: the local demo web app + both Fetch.ai agents, in one process.
 
-    python -m capykondo              # web app on :8787 + agents
-    python -m capykondo --no-agents  # web app only
+    uv run python -m capykondo              # web app on :8787 + agents
+    uv run python -m capykondo --no-agents  # web app only
 """
 from __future__ import annotations
 

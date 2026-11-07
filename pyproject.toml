@@ -1,0 +1,28 @@
+[project]
+name = "capykondo"
+version = "0.1.0"
+description = "Capy Kondo: point a camera at your clutter and a very chill capybara sells it for you."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "openai>=3.46",
+    "google-genai>=3.0",
+    "meta-sam-parser>=0.1.0",
+    "fastapi>=0.162",
+    "uvicorn[standard]>=0.54",
+    "python-multipart>=0.0.33",
+    "pydantic>=2.14",
+    "pillow>=13.0",
+    "numpy>=2.5",
+    "opencv-python-headless>=5.0",
+    "python-dotenv>=1.2",
+    "requests>=2.34",
+    "httpx>=0.28",
+    "stripe>=16.1",
+    "uagents>=0.26.1",
+    "uagents-core>=0.4.12",
+]
+
+[tool.uv]
+# An app, not a library: uv installs the dependencies only (run it with `uv run python -m capykondo`).
+package = false

@@ -1,6 +1,6 @@
 """Exercise the Capy Kondo broker's conversation logic locally (no Agentverse needed).
 
-    python scripts/test_broker.py
+    uv run python scripts/test_broker.py
 """
 import asyncio
 import json

@@ -72,13 +72,13 @@ Try on ASI:One: *"Any headphones under $30?"*, *"Would you take $15 for the keyb
 
 ## Run it
 
-Needs Python 3.11+ and `ffmpeg` (`brew install ffmpeg` / `apt install ffmpeg`).
+Needs [uv](https://docs.astral.sh/uv/) and `ffmpeg` (`brew install uv ffmpeg`, or `apt install ffmpeg` +
+`curl -LsSf https://astral.sh/uv/install.sh | sh`). uv fetches Python 3.13 and the locked dependencies itself.
 
 ```bash
-python3 -m venv .venv && . .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env      # fill in keys (see below)
-python -m capykondo       # web app on http://localhost:8787 + both Fetch.ai agents
+uv sync                      # .venv from pyproject.toml + uv.lock
+cp .env.example .env         # fill in keys (see below)
+uv run python -m capykondo   # web app on http://localhost:8787 + both Fetch.ai agents
 ```
 
 `.env` keys:
@@ -110,7 +110,18 @@ Put the printed `https://….trycloudflare.com` into `PUBLIC_BASE_URL` and resta
 - `http://localhost:8787` — scan anything: **Start camera → Snap photo** (or **Scan 6s video**), or use the samples.
 - Click any card for the evidence drawer: real photo, flaws, SubQ verification, comps — and **Fix this listing** to teach
   Capy (watch **Capy's Brain** adopt or roll back the lesson).
-- `python scripts/scan_cli.py photo.jpg` — run a scan from the terminal; `python scripts/test_broker.py` — scripted buyer.
+- `uv run python scripts/scan_cli.py photo.jpg` — run a scan from the terminal; `uv run python scripts/test_broker.py` —
+  scripted buyer.
+
+### Re-make the demo video
+With the app running (and `ELEVENLABS_API_KEY` in `.env`), record the scenes with Playwright via **pnpm**, then assemble
+narration, music and captions:
+
+```bash
+cd demo && pnpm install && pnpm exec playwright install chromium
+pnpm record                          # scenes -> demo/build/raw
+cd .. && uv run python demo/make_video.py   # -> demo/build/capykondo_demo.mp4
+```
 
 ## Repo map
 
@@ -125,7 +136,8 @@ capykondo/
   agents/          Fetch.ai uAgents: broker (Capy Kondo), appraiser (Capy Appraiser), protocols, cards
   server.py        FastAPI app, SSE event stream, agent test console API
 web/               demo UI (vanilla JS), agent test console, mascot art (Nano Banana 2.1)
-demo/              demo video tooling (Playwright recording, ElevenLabs narration, ffmpeg assembly)
+demo/              demo video tooling (Playwright recording via pnpm, ElevenLabs narration, ffmpeg assembly)
+pyproject.toml     Python deps (uv; locked in uv.lock)
 ```
 
 ## Built with
