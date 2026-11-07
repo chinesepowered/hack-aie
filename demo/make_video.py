@@ -10,6 +10,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import httpx
@@ -21,8 +22,9 @@ from dotenv import load_dotenv  # noqa: E402
 load_dotenv(ROOT / ".env")
 BUILD = ROOT / "demo" / "build"
 RAW = BUILD / "raw"
-VOICE = os.environ.get("CAPY_VOICE_ID", "cgSgspJ2msm6clMCkdW9")      # Jessica - playful, bright, warm (young female)
-TTS_MODEL = os.environ.get("CAPY_TTS_MODEL", "eleven_v4")
+VOICE = os.environ.get("CAPY_VOICE_ID", "tnSpp4vdxKPjI9w0GnoV")      # Hope - upbeat and clear (young American female)
+TTS_MODEL = os.environ.get("CAPY_TTS_MODEL", "eleven_multilingual_v2")  # ElevenLabs' voice-over model: steady accent
+SAY = {"ASI:One": "A.S.I. One", "Muse Spark": "Muse-Spark", "Gemini 4 Argon": "Gemini-4-Argon"}   # spoken spellings for TTS only; captions keep the real names
 W, H, FPS = 1920, 1080, 30
 
 
@@ -84,20 +86,24 @@ def duration(p: Path) -> float:
 
 
 def tts(text: str, out: Path) -> Path:
-    if out.exists() and out.with_suffix(".txt").exists() and out.with_suffix(".txt").read_text() == text:
+    spoken = text
+    for k, v in SAY.items():
+        spoken = spoken.replace(k, v)
+    tag = f"{VOICE}|{TTS_MODEL}|{spoken}"          # cache per voice + model + text
+    side = out.with_suffix(".txt")
+    if out.exists() and side.exists() and side.read_text() == tag:
         return out
-    key = os.environ["ELEVENLABS_API_KEY"]
-    body = {"text": text, "model_id": TTS_MODEL,
-            "voice_settings": {"stability": 0.45, "similarity_boost": 0.8, "style": 0.35, "use_speaker_boost": True}}
-    r = httpx.post(f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE}?output_format=mp3_44100_128",
-                   headers={"xi-api-key": key}, json=body, timeout=180)
-    if r.status_code != 200 and TTS_MODEL != "eleven_multilingual_v2":
-        body["model_id"] = "eleven_multilingual_v2"
-        r = httpx.post(f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE}?output_format=mp3_44100_128",
-                       headers={"xi-api-key": key}, json=body, timeout=180)
+    body = {"text": spoken, "model_id": TTS_MODEL,
+            "voice_settings": {"stability": 0.5, "similarity_boost": 0.8, "style": 0.2, "use_speaker_boost": True}}
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE}?output_format=mp3_44100_128"
+    for attempt in range(6):
+        r = httpx.post(url, headers={"xi-api-key": os.environ["ELEVENLABS_API_KEY"]}, json=body, timeout=180)
+        if r.status_code != 429:          # 429: too many concurrent requests on the plan, wait and retry
+            break
+        time.sleep(3 + 3 * attempt)
     r.raise_for_status()
     out.write_bytes(r.content)
-    out.with_suffix(".txt").write_text(text)
+    side.write_text(tag)
     return out
 
 
