@@ -183,6 +183,81 @@ async def events(request: Request) -> StreamingResponse:
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
+class AgentChat(BaseModel):
+    text: str
+    sender: str = "agent1qtestconsole000000000000000000000000000000000000000000000000"
+
+
+class _ConsoleStorage(dict):
+    def set(self, k, v):
+        self[k] = v
+
+
+_console_storage = _ConsoleStorage()
+
+
+@app.post("/api/agent/chat")
+async def agent_chat(body: AgentChat) -> dict:
+    """Test console: run a message through the real Capy Kondo broker logic in-process and return its replies
+    (the same ChatMessages, cards and payment messages it would send over the Agent Chat Protocol)."""
+    from uagents_core.contrib.protocols.chat import ChatMessage, MetadataContent, TextContent
+    from .agents import broker
+    from . import subq
+
+    class Ctx:
+        storage = _console_storage
+
+        class agent:  # noqa: N801
+            address = broker.agent.address
+
+        def __init__(self):
+            self.sent = []
+
+        async def send(self, dest, msg):
+            self.sent.append(msg)
+
+    ctx = Ctx()
+    text = body.text.strip()
+    store.log_activity("chat", agent="capy-kondo", sender="test console", text=text[:140])
+    if subq.enabled() and not text.startswith("{"):
+        try:
+            risk = await subq.buyer_risk(text)
+            if risk["scam"] >= 0.6:
+                store.log_activity("subq", what="blocked message", scam=round(risk["scam"], 2), text=text[:100])
+                return {"messages": [{"text": "🍊 For everyone's safety I only do deals inside ASI:One - no "
+                                              "off-platform payments, gift cards, codes or outside links. Happy to "
+                                              "help you browse or make an offer here!",
+                                      "risk": risk}]}
+        except Exception:  # noqa: BLE001
+            pass
+    await broker.dispatch(ctx, body.sender, text)
+    out = []
+    for m in ctx.sent:
+        if isinstance(m, ChatMessage):
+            msg: dict = {"text": "\n".join(c.text for c in m.content if isinstance(c, TextContent))}
+            for c in m.content:
+                if isinstance(c, MetadataContent) and c.metadata.get("card_kind"):
+                    msg["card"] = {"kind": c.metadata["card_kind"], "payload": json.loads(c.metadata["card_payload"])}
+            out.append(msg)
+        else:
+            out.append({"protocol": type(m).__name__, "text": f"[{type(m).__name__}]"})
+    return {"messages": out}
+
+
+@app.get("/chat", response_class=HTMLResponse)
+async def chat_console() -> FileResponse:
+    return FileResponse(config.WEB_DIR / "chat.html")
+
+
+@app.get("/studio", response_class=HTMLResponse)
+async def studio_split() -> HTMLResponse:
+    """Side-by-side view (agent console + seller dashboard) used for recording demos."""
+    return HTMLResponse("""<!doctype html><html><head><meta charset=utf-8><title>Capy Kondo</title>
+<style>html,body{margin:0;height:100%;background:#fbf6ee}.w{display:grid;grid-template-columns:520px 1fr;height:100%}
+iframe{border:0;width:100%;height:100%}.l{border-right:1px solid #eadfd0}</style></head>
+<body><div class=w><iframe class=l src="/chat"></iframe><iframe src="/"></iframe></div></body></html>""")
+
+
 _PAGE = """<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
 <title>Capy Kondo</title><style>body{{font-family:system-ui;background:#f6f1e9;color:#3b2f25;display:grid;place-items:center;
 min-height:100vh;margin:0}}.c{{background:#fff;border-radius:20px;padding:32px;max-width:420px;text-align:center;

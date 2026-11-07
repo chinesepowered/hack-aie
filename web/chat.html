@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capy Kondo · agent test console</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#fbf6ee; --ink:#2e241c; --muted:#8a7b6c; --line:#eadfd0; --soft:#f5ede2; --yuzu:#f39a1e; --leaf:#4fa463; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:14px/1.45 Inter, system-ui, sans-serif; background:var(--bg); color:var(--ink); display:flex; flex-direction:column; height:100vh; }
+  header { display:flex; gap:10px; align-items:center; padding:12px 16px; border-bottom:1px solid var(--line); background:#fff; }
+  header img { width:38px; }
+  header .t { font-family:Fraunces, serif; font-weight:700; font-size:18px; }
+  header .s { color:var(--muted); font-size:11.5px; }
+  #log { flex:1; overflow:auto; padding:14px; display:flex; flex-direction:column; gap:10px; }
+  .me { align-self:flex-end; background:var(--ink); color:#fff; padding:9px 13px; border-radius:16px 16px 4px 16px; max-width:80%; }
+  .bot { align-self:flex-start; max-width:92%; display:flex; gap:8px; }
+  .bot img.av { width:30px; height:30px; flex:none; }
+  .bubble { background:#fff; border:1px solid var(--line); padding:10px 13px; border-radius:16px 16px 16px 4px; }
+  .bubble p { margin:0 0 6px; } .bubble p:last-child { margin:0; }
+  .card { margin-top:8px; border:1px solid var(--line); border-radius:14px; overflow:hidden; background:#fff; }
+  .card h4 { margin:0; padding:9px 12px; font-size:13px; background:var(--soft); }
+  .car { display:flex; gap:8px; overflow-x:auto; padding:10px; }
+  .ci { width:150px; flex:none; border:1px solid var(--line); border-radius:12px; overflow:hidden; cursor:pointer; background:#fff; }
+  .ci img { width:150px; height:120px; object-fit:cover; display:block; background:var(--soft); }
+  .ci .b { padding:7px 8px; font-size:12px; } .ci .p { font-weight:700; font-family:Fraunces, serif; font-size:16px; }
+  .rows { padding:8px 12px; } .row { display:flex; justify-content:space-between; gap:10px; padding:4px 0; border-bottom:1px dashed var(--line); font-size:12.5px; }
+  .row:last-child { border:0; } .row .k { color:var(--muted); } .row .v { text-align:right; font-weight:600; max-width:65%; word-break:break-word; }
+  .hero { width:100%; max-height:220px; object-fit:cover; display:block; }
+  .ctas { display:flex; gap:6px; padding:8px 12px 12px; flex-wrap:wrap; }
+  button { font:inherit; border:0; border-radius:999px; padding:8px 14px; font-weight:600; cursor:pointer; background:var(--soft); }
+  button.primary { background:var(--yuzu); color:#fff; }
+  form.bar { display:flex; gap:8px; padding:12px; border-top:1px solid var(--line); background:#fff; }
+  form.bar input { flex:1; border:1px solid var(--line); border-radius:999px; padding:10px 14px; font:inherit; }
+  .proto { font-size:11px; color:var(--muted); font-family:ui-monospace, monospace; }
+  .typing { color:var(--muted); font-size:12px; }
+  .badge { font-size:10.5px; background:#e3f3e6; color:#2f7d46; border-radius:999px; padding:1px 7px; margin-left:4px; }
+</style>
+</head>
+<body>
+<header>
+  <img src="/static/img/capy_logo.png" alt="">
+  <div><div class="t">Capy Kondo <span class="badge">agent</span></div>
+  <div class="s">Agent test console · real agent logic over the Agent Chat Protocol (cards as ASI:One receives them)</div></div>
+</header>
+<div id="log"></div>
+<form class="bar" id="f"><input id="q" placeholder="Ask Capy Kondo… e.g. anything to keep my drinks cold?" autocomplete="off"><button class="primary">Send</button></form>
+<script>
+const log = document.getElementById("log");
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const md = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\*(.+?)\*/g, "<i>$1</i>")
+  .replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g, '<a href="$2" target="_blank">$1</a>').split(/\n\n+/).map((p) => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("");
+function add(html, cls) { const d = document.createElement("div"); d.className = cls; d.innerHTML = html; log.appendChild(d); log.scrollTop = 1e9; return d; }
+async function send(text, shown) {
+  add(esc(shown || text), "me");
+  const t = add('<img class="av" src="/static/img/capy_scan.png"><div class="bubble typing">Capy is thinking…</div>', "bot");
+  const r = await fetch("/api/agent/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+  const j = await r.json();
+  t.remove();
+  for (const m of j.messages) {
+    let h = m.protocol ? `<div class="proto">↳ ${esc(m.protocol)} (Agent Payment Protocol)</div>` : md(m.text || "");
+    if (m.card) h += renderCard(m.card);
+    add(`<img class="av" src="/static/img/capy_logo.png"><div class="bubble">${h}</div>`, "bot");
+  }
+  bindCtas();
+}
+function cta(label, sel, primary) { return `<button class="${primary ? "primary" : ""}" data-sel='${esc(JSON.stringify(sel))}' data-label="${esc(label)}">${esc(label)}</button>`; }
+function renderCard(c) {
+  const p = c.payload;
+  if (c.kind === "carousel") {
+    return `<div class="card"><h4>${esc(p.title)}${p.subtitle ? ` · <span style="font-weight:500;color:#8a7b6c">${esc(p.subtitle)}</span>` : ""}</h4><div class="car">${p.items.map((i) =>
+      `<div class="ci" data-sel='${esc(JSON.stringify(i.primary_cta.selection))}' data-label="${esc(i.title)}">${i.image ? `<img src="${esc(i.image)}">` : `<img>`}<div class="b">${esc(i.title)}<div class="p">${esc(i.secondary_text || "")}</div></div></div>`).join("")}</div></div>`;
+  }
+  if (c.kind === "detail") {
+    return `<div class="card">${p.hero_image ? `<img class="hero" src="${esc(p.hero_image)}">` : ""}<h4>${esc(p.title)}</h4><div class="rows">${(p.summary_rows || []).map((r) =>
+      `<div class="row"><span class="k">${esc(r.label)}</span><span class="v">${esc(r.value)}</span></div>`).join("")}</div><div class="ctas">${(p.ctas || []).map((x) => cta(x.label, x.selection, x.primary)).join("")}</div></div>`;
+  }
+  if (c.kind === "review") {
+    return `<div class="card"><h4>${esc(p.title)}</h4><div class="rows">${(p.summary_rows || []).map((r) =>
+      `<div class="row"><span class="k">${esc(r.label)}</span><span class="v">${esc(r.value)}</span></div>`).join("")}</div><div class="ctas">${p.approve_cta ? cta(p.approve_cta.label, p.approve_cta.selection, true) : ""}${p.reject_cta ? cta(p.reject_cta.label, p.reject_cta.selection) : ""}</div></div>`;
+  }
+  if (c.kind === "form") {
+    const f = p.fields[0];
+    return `<div class="card"><h4>${esc(p.title)}</h4><div class="rows"><div class="row"><span class="k">${esc(f.label)}</span></div>
+      <div class="ctas"><input class="formv" type="number" style="width:110px;border:1px solid #eadfd0;border-radius:10px;padding:7px" data-name="${esc(f.name)}">
+      <button class="primary" data-form='${esc(JSON.stringify(p.submit_cta.selection))}'>${esc(p.submit_cta.label)}</button></div></div></div>`;
+  }
+  return "";
+}
+function bindCtas() {
+  log.querySelectorAll("[data-sel]").forEach((b) => { if (b._b) return; b._b = 1; b.onclick = () => send(b.dataset.sel, b.dataset.label); });
+  log.querySelectorAll("[data-form]").forEach((b) => { if (b._b) return; b._b = 1; b.onclick = () => {
+    const inp = b.parentElement.querySelector(".formv"); const sel = JSON.parse(b.dataset.form); sel[inp.dataset.name] = inp.value;
+    send(JSON.stringify(sel), `Offer $${inp.value}`); }; });
+}
+document.getElementById("f").onsubmit = (e) => { e.preventDefault(); const q = document.getElementById("q"); if (q.value.trim()) { send(q.value.trim()); q.value = ""; } };
+window.capySend = send;
+</script>
+</body>
+</html>

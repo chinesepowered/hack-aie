@@ -119,8 +119,9 @@ def carousel(title: str, items: list[dict], subtitle: str = "") -> dict:
         entry = {"id": p["id"], "title": p["title"], "subtitle": _subtitle(p), "badges": badges,
                  "secondary_text": money(p.get("price")),
                  "primary_cta": {"label": "View", "selection": {"action": "view_item", "item_id": p["id"]}}}
-        if p.get("image_url"):
-            entry["image"] = p["image_url"]
+        img = p.get("image_url") or p.get("image")  # public URL for ASI:One; relative path for the local console
+        if img:
+            entry["image"] = img
         out.append(entry)
     return {"title": title, "subtitle": subtitle, "items": out}
 
@@ -152,8 +153,8 @@ def detail(p: dict) -> dict:
                          "selection": {"action": "buy", "item_id": p["id"]}},
                         {"label": "Make an offer", "selection": {"action": "offer_form", "item_id": p["id"]}},
                         {"label": "Back to results", "selection": {"action": "browse"}}]}
-    if p.get("image_url"):
-        payload["hero_image"] = p["image_url"]
+    if p.get("image_url") or p.get("image"):
+        payload["hero_image"] = p.get("image_url") or p.get("image")
     return payload
 
 
@@ -424,7 +425,7 @@ async def handle_my_listings(ctx: Context, sender: str, st: dict) -> None:
     _save(ctx, sender, st)
     pubs = [commerce.public_item(i) for i in items]
     text = (f"You have {stats['listed']} items listed ({money(stats['listed_value'])}), {stats['reserved']} reserved "
-            f"and {stats['sold']} sold ({money(stats['revenue'])} earned). Room made: {stats["sold"]} thing{"s" if stats["sold"] != 1 else ""}! 🍊")
+            f"and {stats['sold']} sold ({money(stats['revenue'])} earned). Room made: {stats['sold']} thing{'s' if stats['sold'] != 1 else ''}! 🍊")
     await ctx.send(sender, card_msg(text, "carousel", carousel("Your listings", pubs)))
 
 

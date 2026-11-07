@@ -26,3 +26,6 @@ node_modules/
 .DS_Store
 .idea/
 .vscode/
+
+# demo video build outputs
+demo/build/
