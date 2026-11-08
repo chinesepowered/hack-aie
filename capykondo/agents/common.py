@@ -14,6 +14,15 @@ from .. import config
 SEEDS_FILE = config.DATA_DIR / "agent_seeds.json"
 
 
+def registration_policy():
+    """Register through the Almanac API (HTTPS) only. uagents' default policy also queries the Fetch.ai ledger over
+    gRPC while the Agent is being created; venue networks that block gRPC make that crash startup, and our agents
+    are unfunded so they never register on-chain anyway. The mailbox and ASI:One only need the Almanac API."""
+    from uagents.registration import AlmanacApiRegistrationPolicy
+
+    return AlmanacApiRegistrationPolicy()
+
+
 def seed_for(name: str, configured: str) -> str:
     """Use the configured seed, else a random one persisted locally (stable agent address per machine)."""
     if configured:

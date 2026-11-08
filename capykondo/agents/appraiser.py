@@ -14,7 +14,7 @@ from uagents import Agent, Context, Protocol
 from uagents_core.contrib.protocols.chat import ChatAcknowledgement, ChatMessage, TextContent, chat_protocol_spec
 
 from .. import commerce, config, pipeline, store
-from .common import card_msg, money, now, seed_for, text_msg
+from .common import card_msg, money, now, registration_policy, seed_for, text_msg
 from .protocols import AppraiseRequest, AppraiseResult, make_appraisal_protocol
 
 log = logging.getLogger("capy.appraiser")
@@ -26,6 +26,7 @@ agent = Agent(
     seed=seed_for("appraiser", config.APPRAISER_SEED),
     port=config.APPRAISER_PORT,
     mailbox=True,
+    registration_policy=registration_policy(),
     readme_path=str(README),
     description=("Capy Appraiser: send a photo or short video of things you want to sell. It finds every item "
                  "(Muse Spark), segments it with SAM 3.1, grades condition (Gemini 4 Argon) and prices it from live "

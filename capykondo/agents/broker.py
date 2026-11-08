@@ -20,7 +20,7 @@ from uagents_core.contrib.protocols.payment import (
 )
 
 from .. import brain, commerce, config, llm, payments, store, subq
-from .common import card_msg, money, now, parse_selection, seed_for, text_msg
+from .common import card_msg, money, now, parse_selection, registration_policy, seed_for, text_msg
 from .protocols import AppraiseRequest, AppraiseResult, make_appraisal_protocol
 
 log = logging.getLogger("capy.broker")
@@ -31,6 +31,7 @@ agent = Agent(
     seed=seed_for("broker", config.BROKER_SEED),
     port=config.BROKER_PORT,
     mailbox=True,
+    registration_policy=registration_policy(),
     readme_path=str(README),
     description=("Capy Kondo: a calm capybara that turns your clutter into listings and sells it for you. "
                  "Find secondhand items with real-photo evidence, haggle, and pay inside ASI:One."),
