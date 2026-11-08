@@ -40,7 +40,25 @@ async def main(with_agents: bool) -> None:
     await asyncio.gather(*tasks)
 
 
+def ensure_utf8_mode() -> None:
+    """Windows defaults to cp1252, but our READMEs and data are UTF-8 (uagents reads readme_path without an
+    encoding). Re-run this command in Python's UTF-8 mode and wait for it, so Ctrl+C still stops everything."""
+    import os
+    import subprocess
+    import sys
+
+    if os.name != "nt" or sys.flags.utf8_mode:
+        return
+    child = subprocess.Popen([sys.executable, "-X", "utf8", "-m", "capykondo", *sys.argv[1:]])
+    while True:
+        try:
+            sys.exit(child.wait())
+        except KeyboardInterrupt:   # the child gets the same Ctrl+C; wait for it to shut down
+            continue
+
+
 if __name__ == "__main__":
+    ensure_utf8_mode()
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-agents", action="store_true")
     args = ap.parse_args()
