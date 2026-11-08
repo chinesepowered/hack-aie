@@ -1,4 +1,4 @@
-# Capy Kondo 🍊 — make room for what matters
+# Capy Kondo 🍊: make room for what matters
 
 ![tag:innovationlab](https://img.shields.io/badge/innovationlab-3D8BD3)
 ![tag:hackathon](https://img.shields.io/badge/hackathon-5F43F1)
@@ -7,7 +7,7 @@
 
 <p align="center"><img src="docs/screenshot.jpg" width="900" alt="Capy Kondo scanning a table of hackathon merch"></p>
 
-**▶ Demo video (2 min):** [YouTube](https://www.youtube.com/watch?v=ikQs66ZAbuc) · [mp4 in this repo](docs/capykondo_demo.mp4)  
+**▶ Demo video (2 min):** [YouTube](https://www.youtube.com/watch?v=ycgpqoeGFeo) · [mp4 in this repo](docs/capykondo_demo.mp4)  
 **Try the agent:** [Capy Kondo on Agentverse](https://agentverse.ai/agents/details/agent1qtzxcaqfx88j4l0078ktkeat7lka3z9gvg7n0al4u6245zf9727xqgd3sj2/profile),
 or ask ASI:One to *"find a marketplace agent that sells decluttered secondhand items"*.
 
