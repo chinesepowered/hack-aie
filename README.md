@@ -3,22 +3,13 @@
 ![tag:innovationlab](https://img.shields.io/badge/innovationlab-3D8BD3)
 ![tag:hackathon](https://img.shields.io/badge/hackathon-5F43F1)
 
-**Point a camera at your clutter. A very chill capybara sells it for you.**
+Most people have a closet full of things worth selling, but photographing, pricing, describing and haggling over each one is such a chore that it all stays in a box. **Capy Kondo turns one photo or a 6-second video of the whole pile into honest, priced listings in about a minute:** Meta Muse Spark and SAM 3.1 find and cut out every item, Gemini 4 Argon grades its condition, and SubQ Snap checks every claim against the real photo. A Fetch.ai agent then sells everything for you on ASI:One, where buyers search, haggle and pay right in chat. Every correction becomes a lesson that is kept only if it improves results on examples it has never seen, so Capy gets better with every sale.
 
 <p align="center"><img src="docs/screenshot.jpg" width="900" alt="Capy Kondo scanning a table of hackathon merch"></p>
 
 **▶ Demo video (2 min):** [YouTube](https://www.youtube.com/watch?v=ycgpqoeGFeo) · [mp4 in this repo](docs/capykondo_demo.mp4)  
 **Try the agent:** [Capy Kondo on Agentverse](https://agentverse.ai/agents/details/agent1qtzxcaqfx88j4l0078ktkeat7lka3z9gvg7n0al4u6245zf9727xqgd3sj2/profile),
 or ask ASI:One to *"find a marketplace agent that sells decluttered secondhand items"*.
-
-## The problem and our solution
-
-Most closets are full of things worth selling, but selling them is a chore. You photograph every item, research
-prices, write honest descriptions, then haggle with strangers and dodge scams, so the stuff stays in a box or ends up
-in a landfill. **Capy Kondo turns one photo or a 6-second video of a whole pile into verified, priced listings in
-about a minute, and a Fetch.ai agent then sells them for you to anyone on ASI:One**, with real-photo evidence,
-haggling and checkout built in. Every claim is checked against the photo before it goes live, and every correction
-becomes a lesson that is kept only if it improves results on examples it has never seen.
 
 ## Sponsors at a glance
 
