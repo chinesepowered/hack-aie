@@ -28,6 +28,7 @@ window.addEventListener("load", async () => {
 
 function bindUI() {
   $("#btn-start-cam").onclick = startCamera;
+  $("#btn-cam").onclick = () => startCamera();   // always visible: back to the live camera after a scan
   $("#btn-snap").onclick = snapPhoto;
   $("#btn-rec").onclick = recordVideo;
   $("#file").onchange = (e) => e.target.files[0] && uploadFile(e.target.files[0]);
